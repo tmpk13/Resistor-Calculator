@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resistor Color Code</title>
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Bebas+Neue&display=swap');
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+        --bg:             #F2EDE4;
+        --surface:    #EAE4D9;
+        --border:     #C8BFA8;
+        --text:         #2C2A26;
+        --muted:        #7A7060;
+        --orange:     #E8620A;
+        --cyan:         #0AACB8;
+        --coral:        #E84C3A;
+        --mint:         #2EAE84;
+        --body-tan: #C4AE7A;
+        --lead:         #888;
+    }
+
+    body {
+        font-family: 'DM Mono', monospace;
+        background: var(--bg);
+        color: var(--text);
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem 1rem;
+    }
+
+    h1 {
+        font-family: 'Bebas Neue', sans-serif;
+        font-size: 3.5rem;
+        letter-spacing: 0.08em;
+        color: var(--text);
+        margin-bottom: 0.2rem;
+    }
+
+    .subtitle {
+        font-size: 0.75rem;
+        color: var(--muted);
+        letter-spacing: 0.15em;
+        text-transform: uppercase;
+        margin-bottom: 3rem;
+    }
+
+    .stage {
+        position: relative;
+        width: 560px;
+        max-width: 100%;
+    }
+
+    svg#resistor {
+        width: 100%;
+        height: auto;
+        overflow: visible;
+    }
+
+    .band-hit {
+        cursor: pointer;
+        transition: opacity 0.15s;
+    }
+    .band-hit:hover rect.band-rect {
+        filter: brightness(1.15);
+    }
+    .band-hit.active rect.band-rect {
+        stroke: var(--text);
+        stroke-width: 2;
+    }
+
+    .result-card {
+        margin-top: 2.5rem;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 1.25rem 1.75rem;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.4rem;
+    }
+
+    .result-value {
+        font-size: 2.4rem;
+        font-weight: 500;
+        color: var(--orange);
+        letter-spacing: 0.04em;
+    }
+
+    .result-meta {
+        font-size: 0.72rem;
+        color: var(--muted);
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+    }
+
+    .band-labels {
+        display: flex;
+        justify-content: space-around;
+        margin-top: 0.6rem;
+        padding: 0 60px;
+        font-size: 0.65rem;
+        color: var(--muted);
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+    }
+
+    .color-popup {
+        position: absolute;
+        background: #2C2A26;
+        border-radius: 10px;
+        padding: 10px;
+        display: none;
+        flex-wrap: wrap;
+        gap: 7px;
+        z-index: 100;
+        width: 200px;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.35);
+    }
+    .color-popup.visible { display: flex; }
+
+    .color-popup::before {
+        content: '';
+        position: absolute;
+        bottom: 100%;
+        left: 50%;
+        transform: translateX(-50%);
+        border: 7px solid transparent;
+        border-bottom-color: #2C2A26;
+    }
+    .color-popup.above::before {
+        bottom: auto;
+        top: 100%;
+        border-bottom-color: transparent;
+        border-top-color: #2C2A26;
+    }
+
+    .swatch {
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        cursor: pointer;
+        border: 2px solid transparent;
+        position: relative;
+        transition: transform 0.12s, border-color 0.12s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .swatch:hover { transform: scale(1.15); }
+    .swatch.selected { border-color: #fff; }
+    .formula-row {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.72rem;
+        color: var(--muted);
+        margin-top: 0.5rem;
+    }
+
+    .formula-token {
+        display: inline-block;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        vertical-align: middle;
+    }
+
+    .hint {
+        font-size: 0.68rem;
+        color: var(--muted);
+        margin-top: 2.5rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+    }
+</style>
+</head>
+<body>
+
+<h1>Resistor</h1>
+<p class="subtitle">Color Code Calculator &mdash; 4 Band</p>
+
+<div class="stage" id="stage">
+    <svg id="resistor" viewBox="0 0 560 120" xmlns="http://www.w3.org/2000/svg">
+        <line x1="0" y1="60" x2="100" y2="60" stroke="#999" stroke-width="3" stroke-linecap="round"/>
+        <line x1="460" y1="60" x2="560" y2="60" stroke="#999" stroke-width="3" stroke-linecap="round"/>
+        <rect x="100" y="28" width="360" height="64" rx="18" fill="#C4AE7A"/>
+        <rect x="100" y="44" width="360" height="10" rx="0" fill="#B89E60" opacity="0.5"/>
+
+        <g class="band-hit" id="hit-0">
+            <rect class="band-rect" id="band-0" x="148" y="22" width="36" height="76" rx="4" fill="#964B00"/>
+        </g>
+        <g class="band-hit" id="hit-1">
+            <rect class="band-rect" id="band-1" x="210" y="22" width="36" height="76" rx="4" fill="#FF0000"/>
+        </g>
+        <g class="band-hit" id="hit-2">
+            <rect class="band-rect" id="band-2" x="272" y="22" width="36" height="76" rx="4" fill="#FF8000"/>
+        </g>
+        <g class="band-hit" id="hit-3">
+            <rect class="band-rect" id="band-3" x="360" y="22" width="36" height="76" rx="4" fill="#FFD700"/>
+        </g>
+    </svg>
+
+    <div class="band-labels">
+        <span>1st digit</span>
+        <span>2nd digit</span>
+        <span>multiplier</span>
+        <span>tolerance</span>
+    </div>
+
+    <div class="color-popup" id="popup"></div>
+</div>
+
+<div class="result-card">
+    <div class="result-meta">Resistance</div>
+    <div class="result-value" id="result-value">21 k&Omega;</div>
+    <div class="formula-row" id="formula-row"></div>
+    <div class="result-meta" id="result-tol"></div>
+</div>
+
+<p class="hint">Click any band to change its color</p>
+
+<script>
+const COLORS = {
+    digit: [
+        { name:'black',    hex:'#1A1A1A', digit:0 },
+        { name:'brown',    hex:'#964B00', digit:1 },
+        { name:'red',        hex:'#CC0000', digit:2 },
+        { name:'orange', hex:'#FF8000', digit:3 },
+        { name:'yellow', hex:'#FFE600', digit:4 },
+        { name:'green',    hex:'#008800', digit:5 },
+        { name:'blue',     hex:'#0033CC', digit:6 },
+        { name:'violet', hex:'#8800AA', digit:7 },
+        { name:'gray',     hex:'#888888', digit:8 },
+        { name:'white',    hex:'#EEEEEE', digit:9 },
+    ],
+    multiplier: [
+        { name:'black',    hex:'#1A1A1A', mult:1 },
+        { name:'brown',    hex:'#964B00', mult:10 },
+        { name:'red',        hex:'#CC0000', mult:100 },
+        { name:'orange', hex:'#FF8000', mult:1e3 },
+        { name:'yellow', hex:'#FFE600', mult:1e4 },
+        { name:'green',    hex:'#008800', mult:1e5 },
+        { name:'blue',     hex:'#0033CC', mult:1e6 },
+        { name:'violet', hex:'#8800AA', mult:1e7 },
+        { name:'gray',     hex:'#888888', mult:1e8 },
+        { name:'white',    hex:'#EEEEEE', mult:1e9 },
+        { name:'gold',     hex:'#D4AF37', mult:0.1 },
+        { name:'silver', hex:'#B0B0B0', mult:0.01 },
+    ],
+    tolerance: [
+        { name:'brown',    hex:'#964B00', tol:'±1%' },
+        { name:'red',        hex:'#CC0000', tol:'±2%' },
+        { name:'green',    hex:'#008800', tol:'±0.5%' },
+        { name:'blue',     hex:'#0033CC', tol:'±0.25%' },
+        { name:'violet', hex:'#8800AA', tol:'±0.1%' },
+        { name:'gray',     hex:'#888888', tol:'±0.05%' },
+        { name:'gold',     hex:'#D4AF37', tol:'±5%' },
+        { name:'silver', hex:'#B0B0B0', tol:'±10%' },
+    ]
+};
+
+const BAND_TYPE = ['digit','digit','multiplier','tolerance'];
+
+const state = [
+    COLORS.digit.find(c=>c.name==='brown'),
+    COLORS.digit.find(c=>c.name==='red'),
+    COLORS.multiplier.find(c=>c.name==='orange'),
+    COLORS.tolerance.find(c=>c.name==='gold'),
+];
+
+let activeBand = null;
+
+function formatOhms(ohms) {
+    if (ohms >= 1e9)    return (ohms/1e9).toPrecision(3).replace(/\.?0+$/,'') + ' G\u03A9';
+    if (ohms >= 1e6)    return (ohms/1e6).toPrecision(3).replace(/\.?0+$/,'') + ' M\u03A9';
+    if (ohms >= 1e3)    return (ohms/1e3).toPrecision(3).replace(/\.?0+$/,'') + ' k\u03A9';
+    return ohms.toPrecision(3).replace(/\.?0+$/,'') + ' \u03A9';
+}
+
+function calcResistance() {
+    const d1 = state[0].digit;
+    const d2 = state[1].digit;
+    const mult = state[2].mult;
+    const ohms = (d1 * 10 + d2) * mult;
+    return { ohms, tol: state[3].tol };
+}
+
+function updateDisplay() {
+    for (let i = 0; i < 4; i++) {
+        document.getElementById('band-'+i).setAttribute('fill', state[i].hex);
+    }
+    const { ohms, tol } = calcResistance();
+    document.getElementById('result-value').innerHTML = formatOhms(ohms);
+    document.getElementById('result-tol').textContent = tol;
+
+    const row = document.getElementById('formula-row');
+    row.innerHTML = '';
+    const parts = [
+        { color: state[0].hex, label: state[0].digit },
+        { label: state[1].digit },
+        { label: '\u00D7 ' + formatOhms(state[2].mult).replace('\u03A9','').trim() + (state[2].mult<1?'\u03A9':'') },
+    ];
+
+    const span0 = document.createElement('span');
+    const dot0 = document.createElement('span');
+    dot0.className='formula-token'; dot0.style.background=state[0].hex;
+    dot0.style.border=state[0].name==='white'?'1px solid #ccc':'none';
+    span0.appendChild(dot0);
+    span0.append(' ' + state[0].digit);
+    row.appendChild(span0);
+
+    const dot1 = document.createElement('span');
+    dot1.className='formula-token'; dot1.style.background=state[1].hex;
+    dot1.style.border=state[1].name==='white'?'1px solid #ccc':'none';
+    row.appendChild(dot1);
+    row.append(' ' + state[1].digit + ' \u00D7 ');
+
+    const dot2 = document.createElement('span');
+    dot2.className='formula-token'; dot2.style.background=state[2].hex;
+    dot2.style.border=state[2].name==='white'?'1px solid #ccc':'none';
+    row.appendChild(dot2);
+    row.append(' ' + formatOhms(state[2].mult));
+}
+
+function openPopup(bandIndex) {
+    const popup = document.getElementById('popup');
+    const hit = document.getElementById('hit-'+bandIndex);
+    const stage = document.getElementById('stage');
+    const svgEl = document.getElementById('resistor');
+
+    document.querySelectorAll('.band-hit').forEach(el=>el.classList.remove('active'));
+    hit.classList.add('active');
+
+    const svgRect = svgEl.getBoundingClientRect();
+    const stageRect = stage.getBoundingClientRect();
+
+    const viewW = 560;
+    const bandCenters = [166, 228, 290, 378];
+    const cx = bandCenters[bandIndex];
+    const svgScale = svgRect.width / viewW;
+
+    const bandX = (cx * svgScale) + (svgRect.left - stageRect.left);
+    const bandTopY = (22 * svgScale) + (svgRect.top - stageRect.top);
+    const bandBotY = (98 * svgScale) + (svgRect.top - stageRect.top);
+
+    const colors = COLORS[BAND_TYPE[bandIndex]];
+    popup.innerHTML = '';
+
+    const darkSwatches = new Set(['black','brown','red','green','blue','violet']);
+    colors.forEach(c => {
+        const sw = document.createElement('div');
+        sw.className = 'swatch';
+        if (state[bandIndex].name === c.name) sw.classList.add('selected');
+        sw.style.background = c.hex;
+        if (c.name === 'white') sw.style.border = '2px solid #999';
+        const numEl = document.createElement('span');
+        numEl.style.cssText = 'font-size:10px;font-weight:500;pointer-events:none;font-family:DM Mono,monospace;line-height:1;';
+        numEl.style.color = darkSwatches.has(c.name) ? '#fff' : '#1a1a1a';
+        const type = BAND_TYPE[bandIndex];
+        if (type === 'digit') numEl.textContent = c.digit;
+        else if (type === 'multiplier') {
+            if (c.mult >= 1) numEl.textContent = 'e'+Math.round(Math.log10(c.mult));
+            else numEl.textContent = c.mult === 0.1 ? '.1' : '.01';
+        } else {
+            numEl.textContent = c.tol.replace('\u00b1','').replace('%','')+'%';
+        }
+        sw.appendChild(numEl);
+        sw.addEventListener('click', (e) => {
+            e.stopPropagation();
+            state[bandIndex] = c;
+            updateDisplay();
+            closePopup();
+        });
+        sw.title = c.name;
+        popup.appendChild(sw);
+    });
+
+    popup.classList.remove('visible','above');
+
+    const popupW = 200;
+    let left = bandX - popupW / 2;
+    if (left < 0) left = 4;
+    if (left + popupW > stageRect.width) left = stageRect.width - popupW - 4;
+    popup.style.left = left + 'px';
+
+    const spaceAbove = bandTopY - 20;
+    const popupH = Math.ceil(colors.length / 5) * 54 + 20;
+
+    if (spaceAbove >= popupH) {
+        popup.style.top = (bandTopY - popupH - 10) + 'px';
+        popup.classList.add('above');
+    } else {
+        popup.style.top = (bandBotY + 14) + 'px';
+    }
+
+    popup.classList.add('visible');
+    activeBand = bandIndex;
+}
+
+function closePopup() {
+    document.getElementById('popup').classList.remove('visible');
+    document.querySelectorAll('.band-hit').forEach(el=>el.classList.remove('active'));
+    activeBand = null;
+}
+
+for (let i = 0; i < 4; i++) {
+    document.getElementById('hit-'+i).addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (activeBand === i) { closePopup(); return; }
+        openPopup(i);
+    });
+}
+
+document.addEventListener('click', closePopup);
+
+updateDisplay();
+</script>
+</body>
+</html>
