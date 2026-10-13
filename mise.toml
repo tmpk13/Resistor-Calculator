@@ -1,0 +1,7 @@
+[tasks.test]
+description = "Run unit tests"
+run = "bun test"
+
+[tasks.serve]
+description = "Serve the page locally"
+run = "bun x serve ."
